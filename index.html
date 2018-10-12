@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Web Scraping Tutorial</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 60px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+
+.section h2 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h3 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h4 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h5 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+.section h6 {
+  padding-top: 65px;
+  margin-top: -65px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Tutorial</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Web Scraping in R</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Web Scraping Tutorial</h1>
+
+</div>
+
+
+<p>For this tutorial you must have R and Rstudio along with Google Chrome browser. You will also need to install an additional Chrome extension tool called “SelectorGadget”. You can find it on <a href="https://selectorgadget.com/" class="uri">https://selectorgadget.com/</a> with instructions on how to use it to extract elements from a webpage.</p>
+<p>Let us install and load the following packages: “xml2” for importing data from HTML and XML documents, “rvest” for web scraping and “tidyverse” for data manipulation, exploration and visualization.</p>
+<pre class="r"><code># Loading the required packages into R session using library() function.
+library(xml2)
+library(rvest)
+library(tidyverse)</code></pre>
+<p>Let us import the first webpage from “Best Buy” website to scrape</p>
+<pre class="r"><code># The read_html() function reads the webpage from the URL.
+page1 &lt;- read_html(&quot;https://www.bestbuy.com/site/laptop-computers/all-laptops/pcmcat138500050001.c?cp=1&amp;id=pcmcat138500050001&amp;qp=condition_facet%3DCondition~New%5Ecustomerreviews_facet%3DCustomer%20Rating~1%20%26%20Up&quot;) 
+
+# Extracting names from the webpage page1.
+name &lt;- html_nodes(page1, &quot;.sku-header a&quot;) %&gt;% html_text()
+
+# Use the object name to check its contents.
+name</code></pre>
+<pre><code>##  [1] &quot;Lenovo - 330-15ARR 15.6\&quot; Laptop - AMD Ryzen 3 - 8GB Memory - 1TB Hard Drive - Onyx Black&quot;                                                  
+##  [2] &quot;Dell - Inspiron 15.6\&quot; Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 500GB Hard Drive - Black&quot;                                      
+##  [3] &quot;Lenovo - 330S-15IKB 15.6\&quot; Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive - Platinum Gray&quot;                                   
+##  [4] &quot;Lenovo - 14\&quot; Laptop - Intel Celeron - 2GB Memory - 32GB eMMC Flash Memory - Mineral Gray&quot;                                                  
+##  [5] &quot;Dell - Inspiron 15.6\&quot; Laptop - Intel Core i3 - 8GB Memory - 1TB Hard Drive - Black&quot;                                                        
+##  [6] &quot;HP - Stream 14\&quot; Laptop - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Textured Linear Grooves In Aqua Blue&quot;                       
+##  [7] &quot;HP - 15.6\&quot; Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 1TB Hard Drive - HP Finish In Jet Black With A Maglia Texture&quot;            
+##  [8] &quot;HP - 15.6\&quot; Touch-Screen Laptop - Intel Core i5 - 12GB Memory - 128GB Solid State Drive - HP Finish In Natural Silver&quot;                      
+##  [9] &quot;HP - Spectre x360 2-in-1 15.6\&quot; 4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB SSD - HP Finish In Dark Ash Silver&quot;   
+## [10] &quot;Microsoft - Surface Go - 10\&quot; Touch-Screen - Intel Pentium Gold - 8GB Memory - 128GB Storage - Silver&quot;                                      
+## [11] &quot;Dell - Inspiron 2-in-1 13.3\&quot; Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - Era Gray&quot;                        
+## [12] &quot;ASUS - VivoBook Max X541NA 15.6\&quot; Laptop - Intel Pentium - 4GB Memory - 500GB Hard Drive - Chocolate black&quot;                                 
+## [13] &quot;Dell - Inspiron 2-in-1 15.6\&quot; Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - Era Gray&quot;                        
+## [14] &quot;Dell - 2-in-1 15.6\&quot; 4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce MX130 - 512GB SSD - Abyss Black&quot;        
+## [15] &quot;Lenovo - 130-15AST 15.6\&quot; Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 500GB Hard Drive - Black&quot;                                   
+## [16] &quot;Lenovo - Legion Y530 15.6\&quot; Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1050 Ti - 1TB Hard Drive - Black&quot;                     
+## [17] &quot;Dell - G7 15.6\&quot; Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 128GB Solid State Drive + 1TB Hard Drive - Licorice Black&quot;
+## [18] &quot;Acer - Spin 11 2-in-1 11.6\&quot; Touch-Screen Chromebook - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Sparkly Silver&quot;                
+## [19] &quot;Lenovo - IdeaPad 11.6\&quot; Laptop - Intel Celeron - 2GB Memory - 32GB eMMC Flash Memory - Mineral Gray&quot;                                        
+## [20] &quot;Dell - 11.6\&quot; Chromebook - Intel Celeron - 4GB Memory - 16GB eMMC Flash Memory - Black&quot;                                                     
+## [21] &quot;Microsoft - Surface 13.5\&quot; Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive (First Generation) - Platinum&quot;        
+## [22] &quot;HP - ENVY x360 2-in-1 15.6\&quot; Touch-Screen Laptop - Intel Core i7 - 12GB Memory - 256GB Solid State Drive - HP Finish In Natural Silver&quot;     
+## [23] &quot;Dell - Inspiron 2-in-1 13.3\&quot; Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 256GB Solid State Drive - Era Gray&quot;                       
+## [24] &quot;Dell - Inspiron 2-in-1 17.3\&quot; Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce MX150 - 2TB Hard Drive - Era gray&quot;</code></pre>
+<p>The html_nodes() function will select the nodes from the HTML webpage page1. The node to be selected is specified by the CSS selector which we extracted using the SelectorGadget tool.</p>
+<p>Now we will use the Pipe operator(%&gt;%) to chain the html_nodes() with html_text(). When you chain the functions, the output of html_nodes() function will be given as input for the html_text() function which will extract text from the selected HTML node.</p>
+<p>Let us extract the model number for every laptop:</p>
+<pre class="r"><code># Laptop model numbers:
+model &lt;- html_nodes(page1, &quot;.sku-attribute-title:nth-child(1) .sku-value&quot;) %&gt;% html_text()
+
+head(model) # head() displays only the first few elements from the object &quot;model&quot;. </code></pre>
+<pre><code>## [1] &quot;IDEAPAD 330 15 - 81D2008FUS &quot; &quot;I3565-A453BLK-PUS &quot;          
+## [3] &quot;81F5004EUS &quot;                  &quot;81A5001UUS &quot;                 
+## [5] &quot;I3567-3276BLK-PUS &quot;           &quot;14-CB110NR &quot;</code></pre>
+<p>Every model number has a blank space at the end. To remove this blank space we will be using str_replace() function to replace the blank space(&quot; “) with empty strin(”“).</p>
+<p>To detect every blank space at the end we will use Regular Expression “\s$” which detects a space at the end of the string.</p>
+<p>Let’s extract the remaining features like price, rating, reviews and combine them to form a dataframe using the data.frame() function.</p>
+<pre class="r"><code># Removing blank space:
+model &lt;- str_replace(model, &quot;\\s$&quot;, &quot;&quot;)
+
+# Laptop prices:
+price &lt;- html_nodes(page1, &quot;#main-results .priceView-purchase-price span&quot;) %&gt;% html_text()
+
+# Laptop ratings:
+rating &lt;- html_nodes(page1, &quot;#main-results .c-review-average&quot;) %&gt;% html_text() 
+
+# Laptop review counts:
+reviews &lt;- html_nodes(page1, &quot;.c-total-reviews&quot;) %&gt;% html_text()
+
+# Creating dataframe/dataset:
+laptop_p1 &lt;- data.frame(name, model, price, rating, reviews, stringsAsFactors = FALSE) # Setting the stringsAsFactors flag as FALSE to prevent string vectors to be converted to type factor.
+
+head(laptop_p1) # head() can be used to display first few rows from the &quot;laptop_p1&quot; dataframe.</code></pre>
+<pre><code>##                                                                                                                  name
+## 1                            Lenovo - 330-15ARR 15.6&quot; Laptop - AMD Ryzen 3 - 8GB Memory - 1TB Hard Drive - Onyx Black
+## 2                Dell - Inspiron 15.6&quot; Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 500GB Hard Drive - Black
+## 3             Lenovo - 330S-15IKB 15.6&quot; Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive - Platinum Gray
+## 4                            Lenovo - 14&quot; Laptop - Intel Celeron - 2GB Memory - 32GB eMMC Flash Memory - Mineral Gray
+## 5                                  Dell - Inspiron 15.6&quot; Laptop - Intel Core i3 - 8GB Memory - 1TB Hard Drive - Black
+## 6 HP - Stream 14&quot; Laptop - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Textured Linear Grooves In Aqua Blue
+##                         model   price rating reviews
+## 1 IDEAPAD 330 15 - 81D2008FUS $329.99    2.0     (2)
+## 2           I3565-A453BLK-PUS $279.99    4.0   (969)
+## 3                  81F5004EUS $503.99    4.5   (356)
+## 4                  81A5001UUS $149.99    4.0   (515)
+## 5           I3567-3276BLK-PUS $379.99    4.2   (215)
+## 6                  14-CB110NR $219.99    4.0     (1)</code></pre>
+<p>In the dataset, the price column is in type character(or string), we want to convert it to type numeric(or number). To do this we can use as.numeric() function, but this will convert the price to NA instead of numeric as the data values have non-numeric characters like “$” and “,” between numbers.</p>
+<pre class="r"><code># Gives undesirable result:
+# laptop_p1$price &lt;- as.numeric(laptop_p1$price)</code></pre>
+<p>To avoid the error, we will have to remove the non-numeric characters before using as.numeric() function to convert values to numbers.</p>
+<p>we will use</p>
+<pre class="r"><code># Removing &quot;$&quot; and &quot;,&quot; from the prices:
+laptop_p1$price &lt;- str_replace_all(laptop_p1$price, &quot;\\$|,&quot;, &quot;&quot;) 
+
+# Now converting price to numeric:
+laptop_p1$price &lt;- as.numeric(laptop_p1$price)
+
+# Laptop prices after converting to numeric type:
+laptop_p1$price</code></pre>
+<pre><code>##  [1]  329.99  279.99  503.99  149.99  379.99  219.99  299.99  579.99
+##  [9] 1599.99  549.00  749.99  209.99  829.99 1249.99  229.99 1029.99
+## [17] 1099.99  379.99  199.99  199.00  799.00  969.99 1049.99 1099.99</code></pre>
+<pre class="r"><code># Converting ratings from character to numeric type:
+laptop_p1$rating &lt;- as.numeric(laptop_p1$rating)
+
+# Removing &quot;()&quot; and &quot;,&quot; from review values and converting it to numeric type: 
+laptop_p1$reviews &lt;- str_replace_all(laptop_p1$reviews, &quot;\\(|\\)|,&quot;, &quot;&quot;) %&gt;% as.numeric()
+
+# Laptop reviews after converting to numeric:
+laptop_p1$reviews</code></pre>
+<pre><code>##  [1]    2  969  356  515  215    1  325  375  386  124  888 1224  123   40
+## [15]    2   85  267  170 1411    5   67  345  334  460</code></pre>
+<pre class="r"><code># laptop_p1 &lt;- separate(laptop_p1, name, c(&quot;name&quot;, &quot;description&quot;), sep = &quot;\&quot;&quot;)
+# laptop_p1 &lt;- separate(laptop_p1, name, c(&quot;name&quot;, &quot;screen_size&quot;), sep = &quot;\\s+(?=(\\d{2}\\.\\d+\\W)|(\\d{2}\&quot;|15\\S))&quot;, extra = &quot;merge&quot;)
+
+laptop_p1 &lt;- separate(laptop_p1, name, c(&quot;name&quot;, &quot;screen_size&quot;), sep = &quot;\\s+(?=(\\d{2}\\.\\d+\\W)|(\\d{2}\&quot;|15\\S))&quot;)
+
+laptop_p1</code></pre>
+<pre><code>##                          name
+## 1          Lenovo - 330-15ARR
+## 2             Dell - Inspiron
+## 3         Lenovo - 330S-15IKB
+## 4                    Lenovo -
+## 5             Dell - Inspiron
+## 6                 HP - Stream
+## 7                        HP -
+## 8                        HP -
+## 9    HP - Spectre x360 2-in-1
+## 10   Microsoft - Surface Go -
+## 11     Dell - Inspiron 2-in-1
+## 12 ASUS - VivoBook Max X541NA
+## 13     Dell - Inspiron 2-in-1
+## 14              Dell - 2-in-1
+## 15         Lenovo - 130-15AST
+## 16       Lenovo - Legion Y530
+## 17                  Dell - G7
+## 18      Acer - Spin 11 2-in-1
+## 19           Lenovo - IdeaPad
+## 20                     Dell -
+## 21        Microsoft - Surface
+## 22      HP - ENVY x360 2-in-1
+## 23     Dell - Inspiron 2-in-1
+## 24     Dell - Inspiron 2-in-1
+##                                                                                                                         screen_size
+## 1                                                             15.6&quot; Laptop - AMD Ryzen 3 - 8GB Memory - 1TB Hard Drive - Onyx Black
+## 2                                              15.6&quot; Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 500GB Hard Drive - Black
+## 3                                               15.6&quot; Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive - Platinum Gray
+## 4                                                   14&quot; Laptop - Intel Celeron - 2GB Memory - 32GB eMMC Flash Memory - Mineral Gray
+## 5                                                                15.6&quot; Laptop - Intel Core i3 - 8GB Memory - 1TB Hard Drive - Black
+## 6                           14&quot; Laptop - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Textured Linear Grooves In Aqua Blue
+## 7         15.6&quot; Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 1TB Hard Drive - HP Finish In Jet Black With A Maglia Texture
+## 8                   15.6&quot; Touch-Screen Laptop - Intel Core i5 - 12GB Memory - 128GB Solid State Drive - HP Finish In Natural Silver
+## 9                    15.6&quot; 4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB SSD - HP Finish In Dark Ash Silver
+## 10                                                      10&quot; Touch-Screen - Intel Pentium Gold - 8GB Memory - 128GB Storage - Silver
+## 11                                      13.3&quot; Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - Era Gray
+## 12                                                   15.6&quot; Laptop - Intel Pentium - 4GB Memory - 500GB Hard Drive - Chocolate black
+## 13                                      15.6&quot; Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - Era Gray
+## 14             15.6&quot; 4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce MX130 - 512GB SSD - Abyss Black
+## 15                                             15.6&quot; Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 500GB Hard Drive - Black
+## 16                                 15.6&quot; Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1050 Ti - 1TB Hard Drive - Black
+## 17 15.6&quot; Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 128GB Solid State Drive + 1TB Hard Drive - Licorice Black
+## 18                             11.6&quot; Touch-Screen Chromebook - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Sparkly Silver
+## 19                                                11.6&quot; Laptop - Intel Celeron - 2GB Memory - 32GB eMMC Flash Memory - Mineral Gray
+## 20                                                   11.6&quot; Chromebook - Intel Celeron - 4GB Memory - 16GB eMMC Flash Memory - Black
+## 21                   13.5&quot; Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive (First Generation) - Platinum
+## 22                  15.6&quot; Touch-Screen Laptop - Intel Core i7 - 12GB Memory - 256GB Solid State Drive - HP Finish In Natural Silver
+## 23                                     13.3&quot; Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 256GB Solid State Drive - Era Gray
+## 24                       17.3&quot; Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce MX150 - 2TB Hard Drive - Era gray
+##                          model   price rating reviews
+## 1  IDEAPAD 330 15 - 81D2008FUS  329.99    2.0       2
+## 2            I3565-A453BLK-PUS  279.99    4.0     969
+## 3                   81F5004EUS  503.99    4.5     356
+## 4                   81A5001UUS  149.99    4.0     515
+## 5            I3567-3276BLK-PUS  379.99    4.2     215
+## 6                   14-CB110NR  219.99    4.0       1
+## 7                  15-DB0011DX  299.99    4.0     325
+## 8                  15-DA0014DX  579.99    4.5     375
+## 9                   15-CH011DX 1599.99    4.7     386
+## 10                   MCZ-00001  549.00    4.5     124
+## 11           I7373-5558GRY-PUS  749.99    4.5     888
+## 12              X541NA-PD1003Y  209.99    3.9    1224
+## 13           I7573-5132GRY-PUS  829.99    4.7     123
+## 14           I7573-7944BLK-PUS 1249.99    4.2      40
+## 15 IDEAPAD 130 15 - 81H5000NUS  229.99    5.0       2
+## 16                  81FV0002US 1029.99    3.8      85
+## 17           I7588-7378BLK-PUS 1099.99    4.5     267
+## 18              CP311-1HN-C2DV  379.99    4.4     170
+## 19                  81A40025US  199.99    4.1    1411
+## 20           C3181-C871BLK-PUS  199.00    4.4       5
+## 21                   KSR-00001  799.00    4.6      67
+## 22                15M-CN0012DX  969.99    4.7     345
+## 23           I7373-7227GRY-PUS 1049.99    4.3     334
+## 24           I7773-7855GRY-PUS 1099.99    4.4     460</code></pre>
+<pre class="r"><code># laptop_p1 &lt;- separate(laptop_p1, name, into = c(&quot;name&quot;, &quot;screen_size&quot;), sep = &quot; (?=[^ ]+$)&quot;, convert = TRUE)
+laptop_p1 &lt;- separate(laptop_p1, screen_size, into = c(&quot;screen_size&quot;, &quot;specifications&quot;), sep = &quot;\\S |\&quot;&quot;, extra = &quot;merge&quot;)
+
+laptop_p1</code></pre>
+<pre><code>##                          name screen_size
+## 1          Lenovo - 330-15ARR        15.6
+## 2             Dell - Inspiron        15.6
+## 3         Lenovo - 330S-15IKB        15.6
+## 4                    Lenovo -          14
+## 5             Dell - Inspiron        15.6
+## 6                 HP - Stream          14
+## 7                        HP -        15.6
+## 8                        HP -        15.6
+## 9    HP - Spectre x360 2-in-1        15.6
+## 10   Microsoft - Surface Go -          10
+## 11     Dell - Inspiron 2-in-1        13.3
+## 12 ASUS - VivoBook Max X541NA        15.6
+## 13     Dell - Inspiron 2-in-1        15.6
+## 14              Dell - 2-in-1        15.6
+## 15         Lenovo - 130-15AST        15.6
+## 16       Lenovo - Legion Y530        15.6
+## 17                  Dell - G7        15.6
+## 18      Acer - Spin 11 2-in-1        11.6
+## 19           Lenovo - IdeaPad        11.6
+## 20                     Dell -        11.6
+## 21        Microsoft - Surface        13.5
+## 22      HP - ENVY x360 2-in-1        15.6
+## 23     Dell - Inspiron 2-in-1        13.3
+## 24     Dell - Inspiron 2-in-1        17.3
+##                                                                                                                specifications
+## 1                                                             Laptop - AMD Ryzen 3 - 8GB Memory - 1TB Hard Drive - Onyx Black
+## 2                                              Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 500GB Hard Drive - Black
+## 3                                               Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive - Platinum Gray
+## 4                                                 Laptop - Intel Celeron - 2GB Memory - 32GB eMMC Flash Memory - Mineral Gray
+## 5                                                                Laptop - Intel Core i3 - 8GB Memory - 1TB Hard Drive - Black
+## 6                         Laptop - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Textured Linear Grooves In Aqua Blue
+## 7         Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 1TB Hard Drive - HP Finish In Jet Black With A Maglia Texture
+## 8                   Touch-Screen Laptop - Intel Core i5 - 12GB Memory - 128GB Solid State Drive - HP Finish In Natural Silver
+## 9                    4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB SSD - HP Finish In Dark Ash Silver
+## 10                                                    Touch-Screen - Intel Pentium Gold - 8GB Memory - 128GB Storage - Silver
+## 11                                      Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - Era Gray
+## 12                                                   Laptop - Intel Pentium - 4GB Memory - 500GB Hard Drive - Chocolate black
+## 13                                      Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - Era Gray
+## 14             4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce MX130 - 512GB SSD - Abyss Black
+## 15                                             Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 500GB Hard Drive - Black
+## 16                                 Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1050 Ti - 1TB Hard Drive - Black
+## 17 Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 128GB Solid State Drive + 1TB Hard Drive - Licorice Black
+## 18                             Touch-Screen Chromebook - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Sparkly Silver
+## 19                                                Laptop - Intel Celeron - 2GB Memory - 32GB eMMC Flash Memory - Mineral Gray
+## 20                                                   Chromebook - Intel Celeron - 4GB Memory - 16GB eMMC Flash Memory - Black
+## 21                   Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive (First Generation) - Platinum
+## 22                  Touch-Screen Laptop - Intel Core i7 - 12GB Memory - 256GB Solid State Drive - HP Finish In Natural Silver
+## 23                                     Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 256GB Solid State Drive - Era Gray
+## 24                       Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce MX150 - 2TB Hard Drive - Era gray
+##                          model   price rating reviews
+## 1  IDEAPAD 330 15 - 81D2008FUS  329.99    2.0       2
+## 2            I3565-A453BLK-PUS  279.99    4.0     969
+## 3                   81F5004EUS  503.99    4.5     356
+## 4                   81A5001UUS  149.99    4.0     515
+## 5            I3567-3276BLK-PUS  379.99    4.2     215
+## 6                   14-CB110NR  219.99    4.0       1
+## 7                  15-DB0011DX  299.99    4.0     325
+## 8                  15-DA0014DX  579.99    4.5     375
+## 9                   15-CH011DX 1599.99    4.7     386
+## 10                   MCZ-00001  549.00    4.5     124
+## 11           I7373-5558GRY-PUS  749.99    4.5     888
+## 12              X541NA-PD1003Y  209.99    3.9    1224
+## 13           I7573-5132GRY-PUS  829.99    4.7     123
+## 14           I7573-7944BLK-PUS 1249.99    4.2      40
+## 15 IDEAPAD 130 15 - 81H5000NUS  229.99    5.0       2
+## 16                  81FV0002US 1029.99    3.8      85
+## 17           I7588-7378BLK-PUS 1099.99    4.5     267
+## 18              CP311-1HN-C2DV  379.99    4.4     170
+## 19                  81A40025US  199.99    4.1    1411
+## 20           C3181-C871BLK-PUS  199.00    4.4       5
+## 21                   KSR-00001  799.00    4.6      67
+## 22                15M-CN0012DX  969.99    4.7     345
+## 23           I7373-7227GRY-PUS 1049.99    4.3     334
+## 24           I7773-7855GRY-PUS 1099.99    4.4     460</code></pre>
+<pre class="r"><code># PAGE 2
+page2 &lt;- read_html(&quot;https://www.bestbuy.com/site/laptop-computers/all-laptops/pcmcat138500050001.c?cp=2&amp;id=pcmcat138500050001&amp;qp=condition_facet%3DCondition~New%5Ecustomerreviews_facet%3DCustomer%20Rating~1%20%26%20Up&quot;)
+
+name &lt;- html_nodes(page2, &quot;.sku-header a&quot;) %&gt;% 
+  html_text()
+
+model &lt;-  html_nodes(page2, &quot;.sku-attribute-title:nth-child(1) .sku-value&quot;) %&gt;%
+  html_text() %&gt;%
+  str_replace(&quot;\\s$&quot;, &quot;&quot;)
+
+price &lt;- html_nodes(page2, &quot;#main-results .priceView-purchase-price span&quot;) %&gt;%
+  html_text() %&gt;%
+  str_replace_all(&quot;\\$|,&quot;, &quot;&quot;) %&gt;%
+  as.numeric()
+
+rating &lt;- html_nodes(page2, &quot;#main-results .c-review-average&quot;) %&gt;% 
+  html_text() %&gt;% 
+  as.numeric()
+
+reviews &lt;- html_nodes(page2, &quot;.c-total-reviews&quot;) %&gt;% 
+  html_text() %&gt;%
+  str_replace_all(&quot;\\(|\\)|,&quot;, &quot;&quot;) %&gt;%
+  as.numeric()
+
+laptop_p2 &lt;- data.frame(name, model, price, rating, reviews, stringsAsFactors = F)
+
+laptop_p2 &lt;- separate(laptop_p2, name, c(&quot;name&quot;, &quot;screen_size&quot;), sep = &quot;\\s+(?=(\\d{2}\\.\\d+\\W)|(\\d{2}\&quot;|15\\S))&quot;) %&gt;% 
+  separate(screen_size, into = c(&quot;screen_size&quot;, &quot;specifications&quot;), sep = &quot;\\S |\&quot;&quot;, extra = &quot;merge&quot;)
+  
+laptop_p2</code></pre>
+<pre><code>##                             name screen_size
+## 1             ASUS - ROG GU501GM        15.6
+## 2                Acer - Aspire 5        17.3
+## 3                  Dell - 2-in-1        15.6
+## 4                 Acer - Nitro 5        15.6
+## 5          Samsung - Plus 2-in-1        12.2
+## 6          Apple - MacBook Pro -          15
+## 7       Lenovo - Yoga 730 2-in-1        15.6
+## 8                      Samsung -        11.6
+## 9   Microsoft - Surface Laptop &lt;U+0096&gt;        13.5
+## 10                        Acer -        15.6
+## 11                    Dell - XPS        13.3
+## 12                         MSI -        15.6
+## 13                 Razer - Blade        15.6
+## 14      Lenovo - Yoga 920 2-in-1        13.9
+## 15        Dell - Inspiron 2-in-1        15.6
+## 16                        ASUS -        15.6
+## 17          Samsung - Notebook 5        15.6
+## 18                        Dell -        15.6
+## 19       Apple - MacBook Pro®  -          15
+## 20                          HP -        15.6
+## 21 ASUS - ROG Strix Hero Edition        15.6
+## 22        Samsung - Chromebook 3        11.6
+## 23        Apple - MacBook Pro® -        13.3
+## 24            Acer - R 11 2-in-1        11.6
+##                                                                                                                        specifications
+## 1                       Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 1TB Hybrid Drive + 128GB SSD - Brushed Black
+## 2                                                               Laptop - Intel Core i5 - 8GB Memory - 1TB Hard Drive - Obsidian Black
+## 3                      4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce MX130 - 256GB SSD - Abyss Black
+## 4                            Laptop - Intel Core i5 - 8GB Memory - NVIDIA GeForce GTX 1050 Ti - 256GB Solid State Drive - Shale Black
+## 5                                      Touch-Screen Chromebook - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Stealth Silver
+## 6                  Display with Touch Bar - Intel Core i7 - 16GB Memory - AMD Radeon Pro 555X - 256GB SSD (Latest Model) - Space Gray
+## 7                                              Touch-Screen Laptop - Intel Core i7 - 8GB Memory - 256GB Solid State Drive - Iron Gray
+## 8                                                   Chromebook - Intel Celeron - 2GB Memory - 16GB eMMC Flash Memory - Metallic Black
+## 9                                                  Touchscreen - Intel Core i5 &lt;U+0096&gt; 8GB Memory &lt;U+0096&gt; 256GB SSD (First Generation) - Platinum
+## 10                                                    Chromebook - Intel Celeron - 4GB Memory - 16GB eMMC Flash Memory - Granite Gray
+## 11 4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB Solid State Drive - Silver With Black Carbon Fiber Palm Rest
+## 12         Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 1TB Hard Drive + 256GB Solid State Drive - Aluminum Black
+## 13                                   Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 512GB Solid State Drive - Black
+## 14                                               4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB SSD - Platinum
+## 15                                     Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB Solid State Drive - Theoretical Gray
+## 16                                                     Laptop - Intel Pentium Silver - 4GB Memory - 1TB Hard Drive - Dark Brown, Gold
+## 17                                                                   Laptop - AMD Ryzen 5 - 8GB Memory - 1TB Hard Drive - Light Titan
+## 18                  4K Ultra HD Laptop Intel Core i7 16GB Memory NVIDIA GeForce GTX 1060 Max-Q - 1TB HDD + 512GB SSD - Licorice Black
+## 19                                                          Display - Intel Core i7 - 16 GB Memory - 256GB Flash Storage - Space Gray
+## 20                           Touch-Screen Laptop - Intel Core i3 - 8GB Memory - 128GB Solid State Drive - HP Finish In Natural Silver
+## 21                                        Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1050Ti - 1TB+8GB SSHD + 128GB SSD
+## 22                                                  Chromebook - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Metallic Black
+## 23                                                       Display - Intel Core i7 - 16GB Memory - 512GB Solid State Drive - Space Gray
+## 24                                              Touch-Screen Chromebook - Intel Celeron - 4GB Memory - 16GB eMMC Flash Memory - White
+##                  model   price rating reviews
+## 1        GU501GM-BI7N8 1499.99    4.5     185
+## 2           A51751568Y  579.99    5.0       4
+## 3    I7573-7019BLK-PUS 1049.99    4.3     186
+## 4        AN515-53-55G9  799.99    4.5     237
+## 5             XE521QAB  499.00    4.5      44
+## 6            MR932LL/A 2399.99    4.7     235
+## 7           81CU0009US  929.99    4.4     141
+## 8       XE500C13-K05US  159.99    4.6     122
+## 9            DAG-00001  999.00    4.7     662
+## 10        CB3-532-C8DF  199.00    4.5     357
+## 11 XPS9370-7392SLV-PUS 1615.99    4.8       6
+## 12    GS63 STEALTH-010 1449.99    4.8    1956
+## 13  RZ09-02385E92-R3U1 2199.99    4.2      41
+## 14          80Y70010US 1649.99    4.4     346
+## 15   I5579-7961GRY-PUS  925.99    4.3      48
+## 16          X540MADB22  349.00    1.0       1
+## 17      NP550XTA-K01US  524.99    4.1      28
+## 18   G5587-7634BLK-PUS 1429.99    4.3       8
+## 19           MPTR2LL/A 2199.99    4.8    1192
+## 20         15-DA0012DX  499.99    4.6     365
+## 21         GL503GEES73 1249.99    4.0       1
+## 22      XE500C13-K03US  160.99    4.6    1597
+## 23           Z0UK9LL/A 2049.99    4.7     297
+## 24       CB5-132T-C8ZW  299.00    4.6    1708</code></pre>
+<pre class="r"><code>laptop_p1_p2 &lt;- rbind(laptop_p1, laptop_p2)
+laptop_p1_p2</code></pre>
+<pre><code>##                             name screen_size
+## 1             Lenovo - 330-15ARR        15.6
+## 2                Dell - Inspiron        15.6
+## 3            Lenovo - 330S-15IKB        15.6
+## 4                       Lenovo -          14
+## 5                Dell - Inspiron        15.6
+## 6                    HP - Stream          14
+## 7                           HP -        15.6
+## 8                           HP -        15.6
+## 9       HP - Spectre x360 2-in-1        15.6
+## 10      Microsoft - Surface Go -          10
+## 11        Dell - Inspiron 2-in-1        13.3
+## 12    ASUS - VivoBook Max X541NA        15.6
+## 13        Dell - Inspiron 2-in-1        15.6
+## 14                 Dell - 2-in-1        15.6
+## 15            Lenovo - 130-15AST        15.6
+## 16          Lenovo - Legion Y530        15.6
+## 17                     Dell - G7        15.6
+## 18         Acer - Spin 11 2-in-1        11.6
+## 19              Lenovo - IdeaPad        11.6
+## 20                        Dell -        11.6
+## 21           Microsoft - Surface        13.5
+## 22         HP - ENVY x360 2-in-1        15.6
+## 23        Dell - Inspiron 2-in-1        13.3
+## 24        Dell - Inspiron 2-in-1        17.3
+## 25            ASUS - ROG GU501GM        15.6
+## 26               Acer - Aspire 5        17.3
+## 27                 Dell - 2-in-1        15.6
+## 28                Acer - Nitro 5        15.6
+## 29         Samsung - Plus 2-in-1        12.2
+## 30         Apple - MacBook Pro -          15
+## 31      Lenovo - Yoga 730 2-in-1        15.6
+## 32                     Samsung -        11.6
+## 33  Microsoft - Surface Laptop &lt;U+0096&gt;        13.5
+## 34                        Acer -        15.6
+## 35                    Dell - XPS        13.3
+## 36                         MSI -        15.6
+## 37                 Razer - Blade        15.6
+## 38      Lenovo - Yoga 920 2-in-1        13.9
+## 39        Dell - Inspiron 2-in-1        15.6
+## 40                        ASUS -        15.6
+## 41          Samsung - Notebook 5        15.6
+## 42                        Dell -        15.6
+## 43       Apple - MacBook Pro®  -          15
+## 44                          HP -        15.6
+## 45 ASUS - ROG Strix Hero Edition        15.6
+## 46        Samsung - Chromebook 3        11.6
+## 47        Apple - MacBook Pro® -        13.3
+## 48            Acer - R 11 2-in-1        11.6
+##                                                                                                                        specifications
+## 1                                                                     Laptop - AMD Ryzen 3 - 8GB Memory - 1TB Hard Drive - Onyx Black
+## 2                                                      Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 500GB Hard Drive - Black
+## 3                                                       Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive - Platinum Gray
+## 4                                                         Laptop - Intel Celeron - 2GB Memory - 32GB eMMC Flash Memory - Mineral Gray
+## 5                                                                        Laptop - Intel Core i3 - 8GB Memory - 1TB Hard Drive - Black
+## 6                                 Laptop - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Textured Linear Grooves In Aqua Blue
+## 7                 Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 1TB Hard Drive - HP Finish In Jet Black With A Maglia Texture
+## 8                           Touch-Screen Laptop - Intel Core i5 - 12GB Memory - 128GB Solid State Drive - HP Finish In Natural Silver
+## 9                            4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB SSD - HP Finish In Dark Ash Silver
+## 10                                                            Touch-Screen - Intel Pentium Gold - 8GB Memory - 128GB Storage - Silver
+## 11                                              Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - Era Gray
+## 12                                                           Laptop - Intel Pentium - 4GB Memory - 500GB Hard Drive - Chocolate black
+## 13                                              Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - Era Gray
+## 14                     4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce MX130 - 512GB SSD - Abyss Black
+## 15                                                     Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 500GB Hard Drive - Black
+## 16                                         Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1050 Ti - 1TB Hard Drive - Black
+## 17         Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 128GB Solid State Drive + 1TB Hard Drive - Licorice Black
+## 18                                     Touch-Screen Chromebook - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Sparkly Silver
+## 19                                                        Laptop - Intel Celeron - 2GB Memory - 32GB eMMC Flash Memory - Mineral Gray
+## 20                                                           Chromebook - Intel Celeron - 4GB Memory - 16GB eMMC Flash Memory - Black
+## 21                           Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive (First Generation) - Platinum
+## 22                          Touch-Screen Laptop - Intel Core i7 - 12GB Memory - 256GB Solid State Drive - HP Finish In Natural Silver
+## 23                                             Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 256GB Solid State Drive - Era Gray
+## 24                               Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce MX150 - 2TB Hard Drive - Era gray
+## 25                      Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 1TB Hybrid Drive + 128GB SSD - Brushed Black
+## 26                                                              Laptop - Intel Core i5 - 8GB Memory - 1TB Hard Drive - Obsidian Black
+## 27                     4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce MX130 - 256GB SSD - Abyss Black
+## 28                           Laptop - Intel Core i5 - 8GB Memory - NVIDIA GeForce GTX 1050 Ti - 256GB Solid State Drive - Shale Black
+## 29                                     Touch-Screen Chromebook - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Stealth Silver
+## 30                 Display with Touch Bar - Intel Core i7 - 16GB Memory - AMD Radeon Pro 555X - 256GB SSD (Latest Model) - Space Gray
+## 31                                             Touch-Screen Laptop - Intel Core i7 - 8GB Memory - 256GB Solid State Drive - Iron Gray
+## 32                                                  Chromebook - Intel Celeron - 2GB Memory - 16GB eMMC Flash Memory - Metallic Black
+## 33                                                 Touchscreen - Intel Core i5 &lt;U+0096&gt; 8GB Memory &lt;U+0096&gt; 256GB SSD (First Generation) - Platinum
+## 34                                                    Chromebook - Intel Celeron - 4GB Memory - 16GB eMMC Flash Memory - Granite Gray
+## 35 4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB Solid State Drive - Silver With Black Carbon Fiber Palm Rest
+## 36         Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 1TB Hard Drive + 256GB Solid State Drive - Aluminum Black
+## 37                                   Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 512GB Solid State Drive - Black
+## 38                                               4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB SSD - Platinum
+## 39                                     Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB Solid State Drive - Theoretical Gray
+## 40                                                     Laptop - Intel Pentium Silver - 4GB Memory - 1TB Hard Drive - Dark Brown, Gold
+## 41                                                                   Laptop - AMD Ryzen 5 - 8GB Memory - 1TB Hard Drive - Light Titan
+## 42                  4K Ultra HD Laptop Intel Core i7 16GB Memory NVIDIA GeForce GTX 1060 Max-Q - 1TB HDD + 512GB SSD - Licorice Black
+## 43                                                          Display - Intel Core i7 - 16 GB Memory - 256GB Flash Storage - Space Gray
+## 44                           Touch-Screen Laptop - Intel Core i3 - 8GB Memory - 128GB Solid State Drive - HP Finish In Natural Silver
+## 45                                        Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1050Ti - 1TB+8GB SSHD + 128GB SSD
+## 46                                                  Chromebook - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Metallic Black
+## 47                                                       Display - Intel Core i7 - 16GB Memory - 512GB Solid State Drive - Space Gray
+## 48                                              Touch-Screen Chromebook - Intel Celeron - 4GB Memory - 16GB eMMC Flash Memory - White
+##                          model   price rating reviews
+## 1  IDEAPAD 330 15 - 81D2008FUS  329.99    2.0       2
+## 2            I3565-A453BLK-PUS  279.99    4.0     969
+## 3                   81F5004EUS  503.99    4.5     356
+## 4                   81A5001UUS  149.99    4.0     515
+## 5            I3567-3276BLK-PUS  379.99    4.2     215
+## 6                   14-CB110NR  219.99    4.0       1
+## 7                  15-DB0011DX  299.99    4.0     325
+## 8                  15-DA0014DX  579.99    4.5     375
+## 9                   15-CH011DX 1599.99    4.7     386
+## 10                   MCZ-00001  549.00    4.5     124
+## 11           I7373-5558GRY-PUS  749.99    4.5     888
+## 12              X541NA-PD1003Y  209.99    3.9    1224
+## 13           I7573-5132GRY-PUS  829.99    4.7     123
+## 14           I7573-7944BLK-PUS 1249.99    4.2      40
+## 15 IDEAPAD 130 15 - 81H5000NUS  229.99    5.0       2
+## 16                  81FV0002US 1029.99    3.8      85
+## 17           I7588-7378BLK-PUS 1099.99    4.5     267
+## 18              CP311-1HN-C2DV  379.99    4.4     170
+## 19                  81A40025US  199.99    4.1    1411
+## 20           C3181-C871BLK-PUS  199.00    4.4       5
+## 21                   KSR-00001  799.00    4.6      67
+## 22                15M-CN0012DX  969.99    4.7     345
+## 23           I7373-7227GRY-PUS 1049.99    4.3     334
+## 24           I7773-7855GRY-PUS 1099.99    4.4     460
+## 25               GU501GM-BI7N8 1499.99    4.5     185
+## 26                  A51751568Y  579.99    5.0       4
+## 27           I7573-7019BLK-PUS 1049.99    4.3     186
+## 28               AN515-53-55G9  799.99    4.5     237
+## 29                    XE521QAB  499.00    4.5      44
+## 30                   MR932LL/A 2399.99    4.7     235
+## 31                  81CU0009US  929.99    4.4     141
+## 32              XE500C13-K05US  159.99    4.6     122
+## 33                   DAG-00001  999.00    4.7     662
+## 34                CB3-532-C8DF  199.00    4.5     357
+## 35         XPS9370-7392SLV-PUS 1615.99    4.8       6
+## 36            GS63 STEALTH-010 1449.99    4.8    1956
+## 37          RZ09-02385E92-R3U1 2199.99    4.2      41
+## 38                  80Y70010US 1649.99    4.4     346
+## 39           I5579-7961GRY-PUS  925.99    4.3      48
+## 40                  X540MADB22  349.00    1.0       1
+## 41              NP550XTA-K01US  524.99    4.1      28
+## 42           G5587-7634BLK-PUS 1429.99    4.3       8
+## 43                   MPTR2LL/A 2199.99    4.8    1192
+## 44                 15-DA0012DX  499.99    4.6     365
+## 45                 GL503GEES73 1249.99    4.0       1
+## 46              XE500C13-K03US  160.99    4.6    1597
+## 47                   Z0UK9LL/A 2049.99    4.7     297
+## 48               CB5-132T-C8ZW  299.00    4.6    1708</code></pre>
+<pre class="r"><code>laptops &lt;- map_df(1:17, function(i) {
+  cat(i, &quot;&quot;)# Progress Indicator.
+
+  pg &lt;- read_html(paste0(&quot;https://www.bestbuy.com/site/laptop-computers/all-laptops/pcmcat138500050001.c?cp=&quot;,i,&quot;&amp;id=pcmcat138500050001&amp;qp=condition_facet%3DCondition~New%5Ecustomerreviews_facet%3DCustomer%20Rating~1%20%26%20Up&quot;))
+  
+  data.frame(name = html_nodes(pg, &quot;.sku-header a&quot;) %&gt;% html_text(),
+             
+             model =  html_nodes(pg, &quot;.sku-attribute-title:nth-child(1) .sku-value&quot;) %&gt;% html_text() %&gt;% str_replace(&quot;\\s$&quot;, &quot;&quot;),
+             
+             price = html_nodes(pg, &quot;#main-results .priceView-purchase-price span&quot;) %&gt;% html_text() %&gt;% str_replace_all(&quot;\\$|,&quot;, &quot;&quot;) %&gt;% as.numeric(),
+
+             rating = html_nodes(pg, &quot;#main-results .c-review-average&quot;) %&gt;% html_text() %&gt;% as.numeric(),
+             
+             reviews = html_nodes(pg, &quot;.c-total-reviews&quot;) %&gt;% html_text() %&gt;% str_replace_all(&quot;\\(|\\)|,&quot;, &quot;&quot;) %&gt;% as.numeric(),
+
+             stringsAsFactors = F) 
+}) %&gt;% 
+  separate(name, c(&quot;name&quot;, &quot;screen_size&quot;), sep = &quot;\\s+(?=(\\d{2}\\.\\d+\\W)|(\\d{2}\&quot;|15\\S))&quot;) %&gt;%
+  separate(screen_size, into = c(&quot;screen_size&quot;, &quot;specifications&quot;), 
+         sep = &quot;\\S |\&quot;&quot;, extra = &quot;merge&quot;) %&gt;%
+  rowid_to_column(&quot;Row_id&quot;)</code></pre>
+<pre><code>## 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17</code></pre>
+<pre><code>## Warning: Expected 2 pieces. Missing pieces filled with `NA` in 2 rows [372,
+## 375].</code></pre>
+<pre class="r"><code>laptops</code></pre>
+<pre><code>##     Row_id
+## 1        1
+## 2        2
+## 3        3
+## 4        4
+## 5        5
+## 6        6
+## 7        7
+## 8        8
+## 9        9
+## 10      10
+## 11      11
+## 12      12
+## 13      13
+## 14      14
+## 15      15
+## 16      16
+## 17      17
+## 18      18
+## 19      19
+## 20      20
+## 21      21
+## 22      22
+## 23      23
+## 24      24
+## 25      25
+## 26      26
+## 27      27
+## 28      28
+## 29      29
+## 30      30
+## 31      31
+## 32      32
+## 33      33
+## 34      34
+## 35      35
+## 36      36
+## 37      37
+## 38      38
+## 39      39
+## 40      40
+## 41      41
+## 42      42
+## 43      43
+## 44      44
+## 45      45
+## 46      46
+## 47      47
+## 48      48
+## 49      49
+## 50      50
+## 51      51
+## 52      52
+## 53      53
+## 54      54
+## 55      55
+## 56      56
+## 57      57
+## 58      58
+## 59      59
+## 60      60
+## 61      61
+## 62      62
+## 63      63
+## 64      64
+## 65      65
+## 66      66
+## 67      67
+## 68      68
+## 69      69
+## 70      70
+## 71      71
+## 72      72
+## 73      73
+## 74      74
+## 75      75
+## 76      76
+## 77      77
+## 78      78
+## 79      79
+## 80      80
+## 81      81
+## 82      82
+## 83      83
+## 84      84
+## 85      85
+## 86      86
+## 87      87
+## 88      88
+## 89      89
+## 90      90
+## 91      91
+## 92      92
+## 93      93
+## 94      94
+## 95      95
+## 96      96
+## 97      97
+## 98      98
+## 99      99
+## 100    100
+## 101    101
+## 102    102
+## 103    103
+## 104    104
+## 105    105
+## 106    106
+## 107    107
+## 108    108
+## 109    109
+## 110    110
+## 111    111
+## 112    112
+## 113    113
+## 114    114
+## 115    115
+## 116    116
+## 117    117
+## 118    118
+## 119    119
+## 120    120
+## 121    121
+## 122    122
+## 123    123
+## 124    124
+## 125    125
+##                                                                        name
+## 1                                                        Lenovo - 330-15ARR
+## 2                                                           Dell - Inspiron
+## 3                                                       Lenovo - 330S-15IKB
+## 4                                                                  Lenovo -
+## 5                                                           Dell - Inspiron
+## 6                                                               HP - Stream
+## 7                                                                      HP -
+## 8                                                                      HP -
+## 9                                                  HP - Spectre x360 2-in-1
+## 10                                                 Microsoft - Surface Go -
+## 11                                                   Dell - Inspiron 2-in-1
+## 12                                               ASUS - VivoBook Max X541NA
+## 13                                                   Dell - Inspiron 2-in-1
+## 14                                                            Dell - 2-in-1
+## 15                                                       Lenovo - 130-15AST
+## 16                                                     Lenovo - Legion Y530
+## 17                                                                Dell - G7
+## 18                                                    Acer - Spin 11 2-in-1
+## 19                                                         Lenovo - IdeaPad
+## 20                                                                   Dell -
+## 21                                                      Microsoft - Surface
+## 22                                                    HP - ENVY x360 2-in-1
+## 23                                                   Dell - Inspiron 2-in-1
+## 24                                                   Dell - Inspiron 2-in-1
+## 25                                                       ASUS - ROG GU501GM
+## 26                                                          Acer - Aspire 5
+## 27                                                            Dell - 2-in-1
+## 28                                                           Acer - Nitro 5
+## 29                                                    Samsung - Plus 2-in-1
+## 30                                                    Apple - MacBook Pro -
+## 31                                                 Lenovo - Yoga 730 2-in-1
+## 32                                                                Samsung -
+## 33                                             Microsoft - Surface Laptop &lt;U+0096&gt;
+## 34                                                                   Acer -
+## 35                                                               Dell - XPS
+## 36                                                                    MSI -
+## 37                                                            Razer - Blade
+## 38                                                 Lenovo - Yoga 920 2-in-1
+## 39                                                   Dell - Inspiron 2-in-1
+## 40                                                                   ASUS -
+## 41                                                     Samsung - Notebook 5
+## 42                                                                   Dell -
+## 43                                                  Apple - MacBook Pro®  -
+## 44                                                                     HP -
+## 45                                            ASUS - ROG Strix Hero Edition
+## 46                                                   Samsung - Chromebook 3
+## 47                                                   Apple - MacBook Pro® -
+## 48                                                       Acer - R 11 2-in-1
+## 49                                                            ASUS - C300SA
+## 50                                                               Dell - XPS
+## 51                                                        Dell - XPS 2-in-1
+## 52                                                       ASUS - VivoBook 15
+## 53                                            ASUS - ROG Strix Scar Edition
+## 54                                                          Dell - Inspiron
+## 55                                                       Lenovo - 330-17IKB
+## 56                                                 Samsung - Notebook 9 Pro
+## 57                                                Microsoft - Surface Pro &lt;U+0096&gt;
+## 58                                                                    MSI -
+## 59                             Gateway - Netbook / Intel® Atom&lt;U+0099&gt; Processor /
+## 60                                                            ASUS - 2-in-1
+## 61                                                                Dell - G7
+## 62                                                 Lenovo - Yoga 920 2-in-1
+## 63                                                        Razer - Blade Pro
+## 64                                                  Apple - MacBook Air®  -
+## 65                                                   Apple - MacBook Pro® -
+## 66                                                HP - Pavilion x360 2-in-1
+## 67                                                 Microsoft - Surface Go -
+## 68                                                         HP - ENVY 2-in-1
+## 69                                                 Lenovo - Yoga 720 2-in-1
+## 70                                                HP - Pavilion x360 2-in-1
+## 71                                                   Apple - MacBook Pro® -
+## 72                                                    HP - ENVY x360 2-in-1
+## 73                                                                     HP -
+## 74                                                    Apple - MacBook Pro -
+## 75                                                          Dell - Inspiron
+## 76                                                 Lenovo - Yoga 730 2-in-1
+## 77                                                 HP - Spectre x360 2-in-1
+## 78                                    Apple - MacBook Air® (Latest Model) -
+## 79                                                Microsoft - Surface Pro &lt;U+0096&gt;
+## 80                                                            ASUS - 2-in-1
+## 81                                                HP - Pavilion x360 2-in-1
+## 82                                                Microsoft - Surface Pro -
+## 83                                                                HP - Envy
+## 84                                                          Dell - Inspiron
+## 85                                                    Apple - MacBook Pro -
+## 86                                                          Dell - Inspiron
+## 87                                                    HP - ENVY x360 2-in-1
+## 88                                                              HP - Stream
+## 89                                                         HP - ENVY 2-in-1
+## 90                                                   Apple - MacBook Pro® -
+## 91                                                           Acer - Nitro 5
+## 92                                                 Lenovo - Yoga 730 2-in-1
+## 93                                                              HP - Stream
+## 94                                                                     HP -
+## 95                                             Microsoft - Surface Laptop &lt;U+0096&gt;
+## 96                                                              Alienware -
+## 97                                                                Samsung -
+## 98                                                   Apple - MacBook Pro® -
+## 99                                             Microsoft - Surface Book 2 -
+## 100                                                  Dell - Inspiron 2-in-1
+## 101                                                   Apple - MacBook Pro -
+## 102                                                Lenovo - Yoga 920 2-in-1
+## 103                                                                   MSI -
+## 104                                                   Acer - Spin 15 2-in-1
+## 105                                                             HP - 2-in-1
+## 106                                                               Samsung -
+## 107                                       Microsoft - Surface Book 2 2-in-1
+## 108                                                           ASUS - 2-in-1
+## 109                                                Lenovo - Yoga 730 2-in-1
+## 110                                                    Samsung - Pro 2-in-1
+## 111                                                   Apple - MacBook Pro -
+## 112                                                 Apple - MacBook Air®  -
+## 113                                                      Apple - Macbook® -
+## 114                                            Microsoft - Surface Book 2 -
+## 115                                                      ASUS - Flip C302CA
+## 116                                      Lenovo - ThinkPad L380 Yoga 2-in-1
+## 117                                                       Lenovo - Yoga 720
+## 118                                                           ASUS - 2-in-1
+## 119                                              Samsung - Notebook 9 Pro -
+## 120                                               Microsoft - Surface Pro &lt;U+0096&gt;
+## 121                                                      Apple - Macbook® -
+## 122                                                   Apple - MacBook Pro -
+## 123                                            Microsoft - Surface Book 2 -
+## 124                                                Lenovo - Yoga 720 2-in-1
+## 125                                                      Apple - Macbook® -
+##     screen_size
+## 1          15.6
+## 2          15.6
+## 3          15.6
+## 4            14
+## 5          15.6
+## 6            14
+## 7          15.6
+## 8          15.6
+## 9          15.6
+## 10           10
+## 11         13.3
+## 12         15.6
+## 13         15.6
+## 14         15.6
+## 15         15.6
+## 16         15.6
+## 17         15.6
+## 18         11.6
+## 19         11.6
+## 20         11.6
+## 21         13.5
+## 22         15.6
+## 23         13.3
+## 24         17.3
+## 25         15.6
+## 26         17.3
+## 27         15.6
+## 28         15.6
+## 29         12.2
+## 30           15
+## 31         15.6
+## 32         11.6
+## 33         13.5
+## 34         15.6
+## 35         13.3
+## 36         15.6
+## 37         15.6
+## 38         13.9
+## 39         15.6
+## 40         15.6
+## 41         15.6
+## 42         15.6
+## 43           15
+## 44         15.6
+## 45         15.6
+## 46         11.6
+## 47         13.3
+## 48         11.6
+## 49         13.3
+## 50         13.3
+## 51         13.3
+## 52         15.6
+## 53         17.3
+## 54         15.6
+## 55         17.3
+## 56         13.3
+## 57         12.3
+## 58         15.6
+## 59         10.1
+## 60           14
+## 61         15.6
+## 62         13.9
+## 63         17.3
+## 64         13.3
+## 65           13
+## 66           14
+## 67           10
+## 68         15.6
+## 69         12.5
+## 70         11.6
+## 71           13
+## 72         15.6
+## 73           14
+## 74           13
+## 75         15.6
+## 76         13.3
+## 77         13.3
+## 78         13.3
+## 79         12.3
+## 80         15.6
+## 81           14
+## 82         12.3
+## 83         17.3
+## 84         15.6
+## 85           15
+## 86         11.6
+## 87         13.3
+## 88           14
+## 89         15.6
+## 90           13
+## 91         15.6
+## 92         15.6
+## 93         11.6
+## 94         15.6
+## 95         13.5
+## 96         17.3
+## 97         11.6
+## 98           13
+## 99         13.5
+## 100        13.3
+## 101          13
+## 102        13.9
+## 103        15.6
+## 104        15.6
+## 105        12.3
+## 106        11.6
+## 107        13.5
+## 108        15.6
+## 109        15.6
+## 110        12.3
+## 111          15
+## 112        13.3
+## 113          12
+## 114          15
+## 115        12.5
+## 116        13.3
+## 117        12.5
+## 118        15.6
+## 119          15
+## 120        12.3
+## 121          12
+## 122          15
+## 123        13.5
+## 124        15.6
+## 125          12
+##                                                                                                                                                       specifications
+## 1                                                                                                    Laptop - AMD Ryzen 3 - 8GB Memory - 1TB Hard Drive - Onyx Black
+## 2                                                                                     Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 500GB Hard Drive - Black
+## 3                                                                                      Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive - Platinum Gray
+## 4                                                                                        Laptop - Intel Celeron - 2GB Memory - 32GB eMMC Flash Memory - Mineral Gray
+## 5                                                                                                       Laptop - Intel Core i3 - 8GB Memory - 1TB Hard Drive - Black
+## 6                                                                Laptop - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Textured Linear Grooves In Aqua Blue
+## 7                                                Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 1TB Hard Drive - HP Finish In Jet Black With A Maglia Texture
+## 8                                                          Touch-Screen Laptop - Intel Core i5 - 12GB Memory - 128GB Solid State Drive - HP Finish In Natural Silver
+## 9                                                           4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB SSD - HP Finish In Dark Ash Silver
+## 10                                                                                           Touch-Screen - Intel Pentium Gold - 8GB Memory - 128GB Storage - Silver
+## 11                                                                             Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - Era Gray
+## 12                                                                                          Laptop - Intel Pentium - 4GB Memory - 500GB Hard Drive - Chocolate black
+## 13                                                                             Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - Era Gray
+## 14                                                    4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce MX130 - 512GB SSD - Abyss Black
+## 15                                                                                    Laptop - AMD A6-Series - 4GB Memory - AMD Radeon R4 - 500GB Hard Drive - Black
+## 16                                                                        Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1050 Ti - 1TB Hard Drive - Black
+## 17                                        Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 128GB Solid State Drive + 1TB Hard Drive - Licorice Black
+## 18                                                                    Touch-Screen Chromebook - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Sparkly Silver
+## 19                                                                                       Laptop - Intel Celeron - 2GB Memory - 32GB eMMC Flash Memory - Mineral Gray
+## 20                                                                                          Chromebook - Intel Celeron - 4GB Memory - 16GB eMMC Flash Memory - Black
+## 21                                                          Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive (First Generation) - Platinum
+## 22                                                         Touch-Screen Laptop - Intel Core i7 - 12GB Memory - 256GB Solid State Drive - HP Finish In Natural Silver
+## 23                                                                            Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 256GB Solid State Drive - Era Gray
+## 24                                                              Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce MX150 - 2TB Hard Drive - Era gray
+## 25                                                     Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 1TB Hybrid Drive + 128GB SSD - Brushed Black
+## 26                                                                                             Laptop - Intel Core i5 - 8GB Memory - 1TB Hard Drive - Obsidian Black
+## 27                                                    4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce MX130 - 256GB SSD - Abyss Black
+## 28                                                          Laptop - Intel Core i5 - 8GB Memory - NVIDIA GeForce GTX 1050 Ti - 256GB Solid State Drive - Shale Black
+## 29                                                                    Touch-Screen Chromebook - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Stealth Silver
+## 30                                                Display with Touch Bar - Intel Core i7 - 16GB Memory - AMD Radeon Pro 555X - 256GB SSD (Latest Model) - Space Gray
+## 31                                                                            Touch-Screen Laptop - Intel Core i7 - 8GB Memory - 256GB Solid State Drive - Iron Gray
+## 32                                                                                 Chromebook - Intel Celeron - 2GB Memory - 16GB eMMC Flash Memory - Metallic Black
+## 33                                                                                Touchscreen - Intel Core i5 &lt;U+0096&gt; 8GB Memory &lt;U+0096&gt; 256GB SSD (First Generation) - Platinum
+## 34                                                                                   Chromebook - Intel Celeron - 4GB Memory - 16GB eMMC Flash Memory - Granite Gray
+## 35                                4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB Solid State Drive - Silver With Black Carbon Fiber Palm Rest
+## 36                                        Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 1TB Hard Drive + 256GB Solid State Drive - Aluminum Black
+## 37                                                                  Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 512GB Solid State Drive - Black
+## 38                                                                              4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB SSD - Platinum
+## 39                                                                    Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB Solid State Drive - Theoretical Gray
+## 40                                                                                    Laptop - Intel Pentium Silver - 4GB Memory - 1TB Hard Drive - Dark Brown, Gold
+## 41                                                                                                  Laptop - AMD Ryzen 5 - 8GB Memory - 1TB Hard Drive - Light Titan
+## 42                                                 4K Ultra HD Laptop Intel Core i7 16GB Memory NVIDIA GeForce GTX 1060 Max-Q - 1TB HDD + 512GB SSD - Licorice Black
+## 43                                                                                         Display - Intel Core i7 - 16 GB Memory - 256GB Flash Storage - Space Gray
+## 44                                                          Touch-Screen Laptop - Intel Core i3 - 8GB Memory - 128GB Solid State Drive - HP Finish In Natural Silver
+## 45                                                                       Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1050Ti - 1TB+8GB SSHD + 128GB SSD
+## 46                                                                                 Chromebook - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Metallic Black
+## 47                                                                                      Display - Intel Core i7 - 16GB Memory - 512GB Solid State Drive - Space Gray
+## 48                                                                             Touch-Screen Chromebook - Intel Celeron - 4GB Memory - 16GB eMMC Flash Memory - White
+## 49                                                                                            Chromebook - Intel Celeron - 4GB Memory - 16GB eMMC Flash Memory - Red
+## 50                                                4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 1TB SSD - Silver With Black Carbon Fiber Palm Rest
+## 51                                                                              Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 256GB Solid State Drive - Silver
+## 52                                                                                         Laptop - Intel Core i5 - 8GB Memory - 1TB + 8GB Hybrid Hard Drive - Black
+## 53                                                                     Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 1TB SSHD + 256GB SSD - Black
+## 54                                                             Touch-Screen Laptop - Intel Core i7 - 32GB Memory - AMD Radeon 530 - 1TB Hard Drive - Platinum Silver
+## 55                                                                                                 Laptop - Intel Core i5 - 8GB Memory - 1TB Hard Drive - Onyx Black
+## 56                                                                         Touch-Screen Laptop - Intel Core i7 - 8GB Memory - 256GB Solid State Drive - Titan Silver
+## 57                                                                   Touch-Screen &lt;U+0096&gt; Intel Core m3 &lt;U+0096&gt; 4GB Memory &lt;U+0096&gt; 128GB Solid State Drive (Fifth Generation) - Silver
+## 58                                        Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 1TB Hard Drive + 128GB Solid State Drive - Aluminum Black
+## 59                                                                                                                                Display / 1GB Memory - River Black
+## 60                                                 Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 1TB Hard Drive - Sandblasted aluminum silver with chrome hinge
+## 61                                                          Laptop - Intel Core i7 - 8GB Memory - NVIDIA GeForce GTX 1060 - 256GB Solid State Drive - Licorice Black
+## 62                                                                                4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB SSD - Bronze
+## 63                                                               Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1060 - 2TB Hard Drive + 256GB SSD - Black
+## 64                                                                                Display - Intel Core i5 - 8GB Memory - 128GB Flash Storage (Latest Model) - Silver
+## 65                                                                                          Display - Intel Core i5 - 8 GB Memory - 128GB Flash Storage - Space Gray
+## 66                                                 Touch-Screen Laptop - Intel Core i3 - 8GB Memory - 500GB Hard Drive - Natural Silver, Ash Silver Vertical Brushed
+## 67                                                                                            Touch-Screen - Intel Pentium Gold - 4GB Memory - 64GB Storage - Silver
+## 68                                           Touch-Screen Laptop - AMD Ryzen 5 - 8GB Memory - AMD Radeon RX Vega 8 - 128GB Solid State Drive - HP Finish In Dark Ash
+## 69                                                                            Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive - Iron Gray
+## 70                                                                 Touch-Screen Laptop - Intel Pentium - 4GB Memory - 500GB Hard Drive - HP Finish In Natural Silver
+## 71                                                                                          Display - Intel Core i5 - 8 GB Memory - 256GB Flash Storage - Space Gray
+## 72                                                          Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - HP Finish In Natural Silver
+## 73                                                                              Touch-Screen Chromebook - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Grey
+## 74                                                                        Display with Touch Bar - Intel Core i5 - 8GB Memory - 256GB SSD(Latest Model) - Space Gray
+## 75                                                                                 Touch-Screen Laptop - AMD Ryzen 5 - 8GB Memory - 1TB Hard Drive - Platinum Silver
+## 76                                                                             Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - Platinum
+## 77                                                          4K Ultra HD Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 512GB SSD - HP finish in dark ash silver
+## 78                                                                                               Display - Intel Core i5 - 8GB Memory - 256GB Flash Storage - Silver
+## 79                                                                   Touch-Screen &lt;U+0096&gt; Intel Core i5 &lt;U+0096&gt; 8GB Memory &lt;U+0096&gt; 256GB Solid State Drive (Fifth Generation) - Silver
+## 80                                                Touch-Screen Laptop - Intel Core i5 - 12GB Memory - 1TB Hard Drive - Sandblasted aluminum silver with chrome hinge
+## 81                                      Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive - HP Sand Blast Matte In Pale Gold Natural Silver
+## 82                                                                  Touch-Screen - Intel Core i5 - 8GB Memory / 128 GB Solid State Drive (Fifth Generation) - Silver
+## 83                                           Touch-Screen Laptop - Intel Core i7 - 12GB Memory - NVIDIA GeForce MX150 - 1TB Hard Drive - HP Finish In Natural Silver
+## 84                                                                                                    Laptop - Intel Pentium - 4GB Memory - 500GB Hard Drive - Black
+## 85                                                Display with Touch Bar - Intel Core i7 - 16GB Memory - AMD Radeon Pro 560X - 512GB SSD (Latest Model) - Space Gray
+## 86                                                                                                      Laptop - AMD A6 - 4GB Memory - 32GB eMMC Flash Memory - Gray
+## 87                                                           Touch-Screen Laptop - AMD Ryzen 5 - 8GB Memory - 128GB Solid State Drive - HP Finish In Dark Ash Silver
+## 88                                                              Laptop - Intel Celeron - 4GB Memory - 64GB eMMC Flash Memory - Textured Linear Grooves In Smoke Gray
+## 89                                          Touch-Screen Laptop - AMD Ryzen 7 - 8GB Memory - AMD Radeon RX Vega 10 - 256GB Solid State Drive - HP Finish In Dark Ash
+## 90                                                                                              Display - Intel Core i5 - 8 GB Memory - 128GB Flash Storage - Silver
+## 91                                                                      Laptop - Intel Core i5 - 8GB Memory - NVIDIA GeForce GTX 1050 - 1TB Hard Drive - Shale Black
+## 92                                                                            Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - Iron Gray
+## 93                                                              Laptop - Intel Celeron - 4GB Memory - 64GB eMMC Flash Memory - Textured Linear Grooves In Snow White
+## 94                                                                        Touch-Screen Laptop - Intel Core i3 - 8GB Memory - 1TB Hard Drive - HP Finish In Jet Black
+## 95                                                               Touchscreen - Intel Core i5 &lt;U+0096&gt; 8GB Memory &lt;U+0096&gt; 256GB Solid State Drive (First Generation) - Cobalt Blue
+## 96                                                 Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1070 - 256GB Solid State Drive + 1TB Hard Drive - Black
+## 97                                                                                 Chromebook - Intel Celeron - 2GB Memory - 16GB eMMC Flash Memory - Night Charcoal
+## 98                                                                                              Display - Intel Core i5 - 8 GB Memory - 256GB Flash Storage - Silver
+## 99                                                                                      Touch-Screen PixelSense&lt;U+0099&gt; Display - Intel Core i5 / 8GB / 256GB iGPU - Silver
+## 100                                                                              Touch-Screen Laptop - AMD Ryzen 5 - 8GB Memory - 256GB Solid State Drive - Era Gray
+## 101                                                                       Display with Touch Bar - Intel Core i5 - 8GB Memory - 512GB SSD(Latest Model) - Space Gray
+## 102                                                                              Touch-Screen Laptop - Intel Core i7 - 8GB Memory - 256GB Solid State Drive - Bronze
+## 103                                     Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1070 - 512GB Solid State Drive - Matte Black With Gold Diamond Cut
+## 104                                                                   Touch-Screen Chromebook - Intel Pentium - 4GB Memory - 64GB Solid State Drive - Sparkly Silver
+## 105                                  Touch-Screen Chromebook - Intel Core M - 4GB Memory - 32GB eMMC Flash Memory - HP Matte Finish In Ceramic White And Oxford Blue
+## 106                                                                                Chromebook - Intel Celeron - 4GB Memory - 32GB eMMC Flash Memory - Night Charcoal
+## 107                                                                              Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 128GB Solid State Drive - Silver
+## 108                                                            Touch-Screen Laptop - Intel Core i7 - 16GB Memory - 2TB Hard Drive - Sandblasted matte black aluminum
+## 109                                                            4K Touch-Screen Laptop - Intel Core i7 - 16GB Memory - NVIDIA GeForce GTX 1050 - 512GB SSD - Platinum
+## 110                                                                   Touch-Screen Chromebook - Intel Core m3 - 4GB Memory - 32GB eMMC Flash Memory - Metallic Black
+## 111                                                   Display with Touch Bar - Intel Core i7 - 16GB Memory - AMD Radeon Pro 555X - 256GB SSD (Latest Model) - Silver
+## 112                                                                           Display - Intel Core i7 - 8GB Memory - 512GB Solid State Drive (Latest Model) - Silver
+## 113                                                                                 Display - Intel Core M3 - 8GB Memory - 256GB Flash Storage (Latest Model) - Gold
+## 114                                                                                    Touch-Screen PixelSense&lt;U+0099&gt; Display - Intel Core i7 / 16GB / 256GB dGPU - Silver
+## 115                                                     Touch-Screen Chromebook - Intel Core m3 - 4GB Memory - 32GB eMMC Flash Memory - Silver Metal, Silver Plastic
+## 116                                                                               Touch-Screen Laptop - Intel Core i5 - 8GB Memory - 256GB Solid State Drive - Black
+## 117                                                                            Touch-Screen Laptop - Intel Core i3 - 4GB Memory - 128GB Solid State Drive - Platinum
+## 118                       4K Ultra HD Touch-Screen Laptop Intel Core i7 16GB Memory NVIDIA GeForce GTX 1050 - 2TB HDD + 256GB SSD - Sandblasted matte black aluminum
+## 119                                                      Touch-Screen Laptop &lt;U+0096&gt; Intel Core i7 &lt;U+0096&gt; 16GB Memory &lt;U+0096&gt; AMD Radeon 540 &lt;U+0096&gt; 256GB Solid State Drive - Titan silver
+## 120                                                                  Touch-Screen &lt;U+0096&gt; Intel Core i7 &lt;U+0096&gt; 8GB Memory - 256GB Solid State Drive (Fifth Generation) - Silver
+## 121                                                                            Display - Intel Core M3 - 8GB Memory - 256GB Flash Storage (Latest Model) - Rose Gold
+## 122                                                                 Display with Touch Bar - Intel Core i7 - 16GB Memory - AMD Radeon Pro 560 - 1TB SSD - Space Gray
+## 123                                                                                    Touch-Screen PixelSense&lt;U+0099&gt; Display - Intel Core i7 / 16GB / 512GB dGPU - Silver
+## 124                                                                 4K Ultra HD Touch-Screen Laptop - Intel Quad Core i7 - 16GB Memory - 512GB SSD - Platinum Silver
+## 125                                                                           Display - Intel Core M3 - 8GB Memory - 256GB Flash Storage (Latest Model) - Space Gray
+##                           model   price rating reviews
+## 1   IDEAPAD 330 15 - 81D2008FUS  329.99    2.0       2
+## 2             I3565-A453BLK-PUS  279.99    4.0     969
+## 3                    81F5004EUS  503.99    4.5     356
+## 4                    81A5001UUS  149.99    4.0     515
+## 5             I3567-3276BLK-PUS  379.99    4.2     215
+## 6                    14-CB110NR  219.99    4.0       1
+## 7                   15-DB0011DX  299.99    4.0     325
+## 8                   15-DA0014DX  579.99    4.5     375
+## 9                    15-CH011DX 1599.99    4.7     386
+## 10                    MCZ-00001  549.00    4.5     124
+## 11            I7373-5558GRY-PUS  749.99    4.5     888
+## 12               X541NA-PD1003Y  209.99    3.9    1224
+## 13            I7573-5132GRY-PUS  829.99    4.7     123
+## 14            I7573-7944BLK-PUS 1249.99    4.2      40
+## 15  IDEAPAD 130 15 - 81H5000NUS  229.99    5.0       2
+## 16                   81FV0002US 1029.99    3.8      85
+## 17            I7588-7378BLK-PUS 1099.99    4.5     267
+## 18               CP311-1HN-C2DV  379.99    4.4     170
+## 19                   81A40025US  199.99    4.1    1411
+## 20            C3181-C871BLK-PUS  199.00    4.4       5
+## 21                    KSR-00001  799.00    4.6      67
+## 22                 15M-CN0012DX  969.99    4.7     345
+## 23            I7373-7227GRY-PUS 1049.99    4.3     334
+## 24            I7773-7855GRY-PUS 1099.99    4.4     460
+## 25                GU501GM-BI7N8 1499.99    4.5     185
+## 26                   A51751568Y  579.99    5.0       4
+## 27            I7573-7019BLK-PUS 1049.99    4.3     186
+## 28                AN515-53-55G9  799.99    4.5     237
+## 29                     XE521QAB  499.00    4.5      44
+## 30                    MR932LL/A 2399.99    4.7     235
+## 31                   81CU0009US  929.99    4.4     141
+## 32               XE500C13-K05US  159.99    4.6     122
+## 33                    DAG-00001  999.00    4.7     662
+## 34                 CB3-532-C8DF  199.00    4.5     357
+## 35          XPS9370-7392SLV-PUS 1615.99    4.8       6
+## 36             GS63 STEALTH-010 1449.99    4.8    1956
+## 37           RZ09-02385E92-R3U1 2199.99    4.2      41
+## 38                   80Y70010US 1649.99    4.4     346
+## 39            I5579-7961GRY-PUS  925.99    4.3      48
+## 40                   X540MADB22  349.00    1.0       1
+## 41               NP550XTA-K01US  524.99    4.1      28
+## 42            G5587-7634BLK-PUS 1429.99    4.3       8
+## 43                    MPTR2LL/A 2199.99    4.8    1192
+## 44                  15-DA0012DX  499.99    4.6     365
+## 45                  GL503GEES73 1249.99    4.0       1
+## 46               XE500C13-K03US  160.99    4.6    1597
+## 47                    Z0UK9LL/A 2049.99    4.7     297
+## 48                CB5-132T-C8ZW  299.00    4.6    1708
+## 49                 C300SADH02RD  229.00    4.4      43
+## 50          XPS9370-7040SLV-PUS 1799.99    4.1       9
+## 51          XPS9365-7086SLV-PUS 1189.99    4.3     357
+## 52                   X540UADB51  584.99    5.0       1
+## 53                  GL703GMDS74 1537.99    3.0       2
+## 54            I5570-7807SLV-PUS 1160.99    5.0       1
+## 55                   81DM001UUS  529.99    4.4     438
+## 56               NP940X3M-K01US  604.99    4.6     156
+## 57                    FJR-00001  799.00    4.6      34
+## 58          GE63 RAIDER RGB-012 1599.99    5.0       4
+## 59                      LT2811U  149.99    4.1      14
+## 60                 Q405UA-BI5T5  629.99    4.0     324
+## 61            I7588-7385BLK-PUS  979.99    4.4     184
+## 62                   80Y7002SUS 1749.99    4.4     346
+## 63           RZ09-02202E75-R3U1 2282.99    4.5      23
+## 64                    MQD32LL/A  999.99    4.8    5988
+## 65                    MPXQ2LL/A 1249.99    4.8    4162
+## 66                 14M-CD0001DX  499.99    4.5     237
+## 67                    MHN-00001  399.00    4.5     182
+## 68                 15M-CP0011DX  659.99    4.5     207
+## 69                   81B5000KUS  599.99    4.3     395
+## 70                  11M-AD113DX  399.99    4.1     136
+## 71                    MPXT2LL/A 1449.99    4.8    3340
+## 72                 15M-CN0011DX  849.99    4.7     418
+## 73                   14-CA061DX  299.00    4.5     240
+## 74                    MR9Q2LL/A 1799.99    4.8     306
+## 75            I5575-A214SLV-PUS  529.99    4.1     101
+## 76                   81CT0008US  829.99    4.2     481
+## 77                   13-AE013DX 1349.99    4.5     494
+## 78                    MQD42LL/A 1199.99    4.8    2470
+## 79                    FJX-00001  999.00    4.7     747
+## 80                 Q505UA-BI5T7  829.99    4.4     374
+## 81                 14M-CD0003DX  729.99    4.6     238
+## 82                    KJR-00001  699.00    4.7     194
+## 83                 17M-BW0013DX 1049.99    4.7     206
+## 84            I3573-P269BLK-PUS  279.99    4.1     100
+## 85                    MR942LL/A 2799.99    4.7     116
+## 86            I3180-A361GRY-PUS  199.99    4.0     613
+## 87                 13M-AG0001DX  679.99    4.4     106
+## 88                   14-CB112DX  249.99    4.4      45
+## 89                 15M-CP0012DX  779.99    4.2      74
+## 90                    MPXR2LL/A 1249.99    4.8    4162
+## 91                AN515-53-52FA  719.99    4.4     242
+## 92                   81CU000BUS  829.99    4.6     280
+## 93                   11-AH112DX  229.99    3.4      15
+## 94                   15-BS113DX  455.99    4.5     863
+## 95                    DAG-00007  999.00    4.7     662
+## 96           AW17R5-7811BLK-PUS 1899.99    4.6     158
+## 97               XE501C13-K01US  229.00    4.5      72
+## 98                    MPXU2LL/A 1449.99    4.8    3340
+## 99                    HMW-00001 1499.00    4.7     370
+## 100           I7375-A439GRY-PUS  699.99    4.2     224
+## 101                   MR9R2LL/A 1999.99    4.7      96
+## 102                  80Y7000WUS 1299.99    4.5     361
+## 103       GS65 STEALTH THIN-037 1999.99    4.8    1603
+## 104               CP315-1H-P1K8  449.00    4.4     101
+## 105                X2 12-F014DX  539.00    4.6      78
+## 106              XE501C13-K02US  259.00    4.5     139
+## 107                   HMU-00001 1149.00    4.8     136
+## 108                Q525UA-BI7T9 1029.99    4.3     139
+## 109                  81CU000CUS 1399.99    4.1      38
+## 110              XE510C25-K01US  599.00    4.5      24
+## 111                   MR962LL/A 2399.99    4.7     235
+## 112                   Z0UU1LL/A 1549.99    4.8     509
+## 113                   MNYK2LL/A 1299.99    4.8     646
+## 114                   HNR-00001 2499.00    4.7     151
+## 115                C302CA-GU001  529.00    4.6      75
+## 116                  20M7S03400  999.99    4.6      18
+## 117                  81B5001HUS  539.99    4.2     252
+## 118               Q535UD-BI7T11 1499.99    4.4     156
+## 119             NP-940X5N-X01US 1349.99    4.5     131
+## 120                   FJZ-00001 1399.00    4.7     236
+## 121                   MNYM2LL/A 1299.99    4.8     646
+## 122                   MPTW2LL/A 2799.99    4.4       9
+## 123                   HNL-00001 2499.00    4.7     133
+## 124                  80X7001SUS 1234.99    4.3     699
+## 125                   MNYF2LL/A 1299.99    4.8     646
+##  [ reached getOption(&quot;max.print&quot;) -- omitted 255 rows ]</code></pre>
+<pre class="r"><code>for(i in 1:nrow(laptops)){
+  if(laptops$model[i] == &quot;G50Vm-X1&quot;){
+    laptops$screen_size[i] &lt;- 15.6
+    } 
+  else if(laptops$model[i] == &quot;G70S-X1&quot;){
+    laptops$screen_size[i] &lt;- 17.1
+    }
+  }
+
+laptops[c(386, 389),]</code></pre>
+<pre><code>##      Row_id name screen_size specifications model price rating reviews
+## NA       NA &lt;NA&gt;        &lt;NA&gt;           &lt;NA&gt;  &lt;NA&gt;    NA     NA      NA
+## NA.1     NA &lt;NA&gt;        &lt;NA&gt;           &lt;NA&gt;  &lt;NA&gt;    NA     NA      NA</code></pre>
+<pre class="r"><code>for(i in 1:nrow(laptops)){
+  if(is.na(laptops$specifications[i])){
+    x &lt;- str_split(laptops$name[i], &quot; - &quot;, n = 2)
+    laptops$name[i] &lt;- x[[1]][1]
+    laptops$specifications[i] &lt;- x[[1]][2]
+    }
+  }
+
+laptops[c(386, 389),]</code></pre>
+<pre><code>##      Row_id name screen_size specifications model price rating reviews
+## NA       NA &lt;NA&gt;        &lt;NA&gt;           &lt;NA&gt;  &lt;NA&gt;    NA     NA      NA
+## NA.1     NA &lt;NA&gt;        &lt;NA&gt;           &lt;NA&gt;  &lt;NA&gt;    NA     NA      NA</code></pre>
+<p>Finally we can use write_csv() function to export the laptops dataframe to simple text file which stores data in tabular format such as a CSV file.</p>
+<pre class="r"><code># Exporting dataframe to a CSV file.
+write.csv(laptops, file = &quot;bblaptops.csv&quot;)</code></pre>
+<p>Let’s do some simple data analysis on the laptops dataframe.</p>
+<p>We will visualize the inventory of laptops and classify them according to their screen size.</p>
+<pre class="r"><code>ggplot(data = laptops, mapping = aes(x = screen_size)) + geom_bar()</code></pre>
+<p><img src="index_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

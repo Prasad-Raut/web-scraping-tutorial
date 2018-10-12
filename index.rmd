@@ -1,0 +1,228 @@
+---
+title: "Web Scraping Tutorial"
+output: 
+  html_document:
+    theme: flatly
+    css: style.css
+---
+
+For this tutorial you must have R and Rstudio along with Google Chrome browser. You will also need to install an additional Chrome extension tool called "SelectorGadget". You can find it on https://selectorgadget.com/ with instructions on how to use it to extract elements from a webpage.
+
+Let us install and load the following packages: "xml2" for importing data from HTML and XML documents, "rvest" for web scraping and "tidyverse" for data manipulation, exploration and visualization.
+
+```{r}
+# Loading the required packages into R session using library() function.
+library(xml2)
+library(rvest)
+library(tidyverse)
+```
+
+Let us import the first webpage from "Best Buy" website to scrape  
+
+```{r}
+# The read_html() function reads the webpage from the URL.
+page1 <- read_html("https://www.bestbuy.com/site/laptop-computers/all-laptops/pcmcat138500050001.c?cp=1&id=pcmcat138500050001&qp=condition_facet%3DCondition~New%5Ecustomerreviews_facet%3DCustomer%20Rating~1%20%26%20Up") 
+
+# Extracting names from the webpage page1.
+name <- html_nodes(page1, ".sku-header a") %>% html_text()
+
+# Use the object name to check its contents.
+name
+```
+
+The html_nodes() function will select the nodes from the HTML webpage page1. The node to be selected is specified by the CSS selector which we extracted using the SelectorGadget tool. 
+
+Now we will use the Pipe operator(%>%) to chain the html_nodes() with html_text(). When you chain the functions, the output of html_nodes() function will be given as input for the html_text() function which will extract text from the selected HTML node.  
+
+Let us extract the model number for every laptop:
+
+```{r}
+# Laptop model numbers:
+model <- html_nodes(page1, ".sku-attribute-title:nth-child(1) .sku-value") %>% html_text()
+
+head(model) # head() displays only the first few elements from the object "model". 
+```
+
+Every model number has a blank space at the end. To remove this blank space we will be using str_replace() function to replace the blank space(" ") with empty strin(""). 
+
+To detect every blank space at the end we will use Regular Expression "\\s$" which detects a space at the end of the string. 
+
+Let's extract the remaining features like price, rating, reviews and combine them to form a dataframe using the data.frame() function.
+
+```{r}
+# Removing blank space:
+model <- str_replace(model, "\\s$", "")
+
+# Laptop prices:
+price <- html_nodes(page1, "#main-results .priceView-purchase-price span") %>% html_text()
+
+# Laptop ratings:
+rating <- html_nodes(page1, "#main-results .c-review-average") %>% html_text() 
+
+# Laptop review counts:
+reviews <- html_nodes(page1, ".c-total-reviews") %>% html_text()
+
+# Creating dataframe/dataset:
+laptop_p1 <- data.frame(name, model, price, rating, reviews, stringsAsFactors = FALSE) # Setting the stringsAsFactors flag as FALSE to prevent string vectors to be converted to type factor.
+
+head(laptop_p1) # head() can be used to display first few rows from the "laptop_p1" dataframe.
+```
+
+In the dataset, the price column is in type character(or string), we want to convert it to type numeric(or number). To do this we can use as.numeric() function, but this will convert the price to NA instead of numeric as the data values have non-numeric characters like "$" and "," between numbers.
+
+```{r}
+# Gives undesirable result:
+# laptop_p1$price <- as.numeric(laptop_p1$price)
+```
+
+To avoid the error, we will have to remove the non-numeric characters before using as.numeric() function to convert values to numbers. 
+
+we will use 
+
+```{r}
+# Removing "$" and "," from the prices:
+laptop_p1$price <- str_replace_all(laptop_p1$price, "\\$|,", "") 
+
+# Now converting price to numeric:
+laptop_p1$price <- as.numeric(laptop_p1$price)
+
+# Laptop prices after converting to numeric type:
+laptop_p1$price
+```
+
+
+```{r}
+# Converting ratings from character to numeric type:
+laptop_p1$rating <- as.numeric(laptop_p1$rating)
+
+# Removing "()" and "," from review values and converting it to numeric type: 
+laptop_p1$reviews <- str_replace_all(laptop_p1$reviews, "\\(|\\)|,", "") %>% as.numeric()
+
+# Laptop reviews after converting to numeric:
+laptop_p1$reviews
+```
+
+
+```{r}
+# laptop_p1 <- separate(laptop_p1, name, c("name", "description"), sep = "\"")
+# laptop_p1 <- separate(laptop_p1, name, c("name", "screen_size"), sep = "\\s+(?=(\\d{2}\\.\\d+\\W)|(\\d{2}\"|15\\S))", extra = "merge")
+
+laptop_p1 <- separate(laptop_p1, name, c("name", "screen_size"), sep = "\\s+(?=(\\d{2}\\.\\d+\\W)|(\\d{2}\"|15\\S))")
+
+laptop_p1
+```
+
+```{r}
+# laptop_p1 <- separate(laptop_p1, name, into = c("name", "screen_size"), sep = " (?=[^ ]+$)", convert = TRUE)
+laptop_p1 <- separate(laptop_p1, screen_size, into = c("screen_size", "specifications"), sep = "\\S |\"", extra = "merge")
+
+laptop_p1
+```
+
+```{r}
+# PAGE 2
+page2 <- read_html("https://www.bestbuy.com/site/laptop-computers/all-laptops/pcmcat138500050001.c?cp=2&id=pcmcat138500050001&qp=condition_facet%3DCondition~New%5Ecustomerreviews_facet%3DCustomer%20Rating~1%20%26%20Up")
+
+name <- html_nodes(page2, ".sku-header a") %>% 
+  html_text()
+
+model <-  html_nodes(page2, ".sku-attribute-title:nth-child(1) .sku-value") %>%
+  html_text() %>%
+  str_replace("\\s$", "")
+
+price <- html_nodes(page2, "#main-results .priceView-purchase-price span") %>%
+  html_text() %>%
+  str_replace_all("\\$|,", "") %>%
+  as.numeric()
+
+rating <- html_nodes(page2, "#main-results .c-review-average") %>% 
+  html_text() %>% 
+  as.numeric()
+
+reviews <- html_nodes(page2, ".c-total-reviews") %>% 
+  html_text() %>%
+  str_replace_all("\\(|\\)|,", "") %>%
+  as.numeric()
+
+laptop_p2 <- data.frame(name, model, price, rating, reviews, stringsAsFactors = F)
+
+laptop_p2 <- separate(laptop_p2, name, c("name", "screen_size"), sep = "\\s+(?=(\\d{2}\\.\\d+\\W)|(\\d{2}\"|15\\S))") %>% 
+  separate(screen_size, into = c("screen_size", "specifications"), sep = "\\S |\"", extra = "merge")
+  
+laptop_p2
+```
+
+```{r}
+laptop_p1_p2 <- rbind(laptop_p1, laptop_p2)
+laptop_p1_p2
+```
+
+
+```{r}
+laptops <- map_df(1:17, function(i) {
+  cat(i, "")# Progress Indicator.
+
+  pg <- read_html(paste0("https://www.bestbuy.com/site/laptop-computers/all-laptops/pcmcat138500050001.c?cp=",i,"&id=pcmcat138500050001&qp=condition_facet%3DCondition~New%5Ecustomerreviews_facet%3DCustomer%20Rating~1%20%26%20Up"))
+  
+  data.frame(name = html_nodes(pg, ".sku-header a") %>% html_text(),
+             
+             model =  html_nodes(pg, ".sku-attribute-title:nth-child(1) .sku-value") %>% html_text() %>% str_replace("\\s$", ""),
+             
+             price = html_nodes(pg, "#main-results .priceView-purchase-price span") %>% html_text() %>% str_replace_all("\\$|,", "") %>% as.numeric(),
+
+             rating = html_nodes(pg, "#main-results .c-review-average") %>% html_text() %>% as.numeric(),
+             
+             reviews = html_nodes(pg, ".c-total-reviews") %>% html_text() %>% str_replace_all("\\(|\\)|,", "") %>% as.numeric(),
+
+             stringsAsFactors = F) 
+}) %>% 
+  separate(name, c("name", "screen_size"), sep = "\\s+(?=(\\d{2}\\.\\d+\\W)|(\\d{2}\"|15\\S))") %>%
+  separate(screen_size, into = c("screen_size", "specifications"), 
+         sep = "\\S |\"", extra = "merge") %>%
+  rowid_to_column("Row_id")
+```
+
+```{r}
+laptops
+```
+
+```{r}
+for(i in 1:nrow(laptops)){
+  if(laptops$model[i] == "G50Vm-X1"){
+    laptops$screen_size[i] <- 15.6
+    } 
+  else if(laptops$model[i] == "G70S-X1"){
+    laptops$screen_size[i] <- 17.1
+    }
+  }
+
+laptops[c(386, 389),]
+```
+
+```{r}
+for(i in 1:nrow(laptops)){
+  if(is.na(laptops$specifications[i])){
+    x <- str_split(laptops$name[i], " - ", n = 2)
+    laptops$name[i] <- x[[1]][1]
+    laptops$specifications[i] <- x[[1]][2]
+    }
+  }
+
+laptops[c(386, 389),]
+```
+
+Finally we can use write_csv() function to export the laptops dataframe to simple text file which stores data in tabular format such as a CSV file.
+
+```{r}
+# Exporting dataframe to a CSV file.
+write.csv(laptops, file = "bblaptops.csv")
+```
+
+Let's do some simple data analysis on the laptops dataframe.
+
+We will visualize the inventory of laptops and classify them according to their screen size. 
+
+```{r}
+ggplot(data = laptops, mapping = aes(x = screen_size)) + geom_bar()
+```
+

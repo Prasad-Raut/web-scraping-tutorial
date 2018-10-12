@@ -1,0 +1,12 @@
+name: "Tutorial-website"
+output_dir: "."
+navbar:
+  title: "Tutorial"
+  left:
+    - text: "Web Scraping in R"
+      href: index.html
+      
+output:
+  html_document:
+    theme: flatly
+    css: style.css

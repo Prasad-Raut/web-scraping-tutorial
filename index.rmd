@@ -6,22 +6,26 @@ output:
     css: style.css
 ---
 
-For this tutorial you must have R and Rstudio along with Google Chrome browser. You will also need to install an additional Chrome extension tool called "SelectorGadget". You can find it on https://selectorgadget.com/ with instructions on how to use it to extract elements from a webpage.
+For this tutorial you must have R and Rstudio along with Google Chrome browser. You will also need to install an additional Chrome extension tool called "SelectorGadget". You can find it on their <a href = "https://selectorgadget.com/" target = "_blank">website</a> with instructions on how to use it to extract elements from a webpage.
 
-Let us install and load the following packages: "xml2" for importing data from HTML and XML documents, "rvest" for web scraping and "tidyverse" for data manipulation, exploration and visualization.
+Let us install and load the following packages in R: "xml2" for importing data from HTML and XML documents, "rvest" for web scraping and "tidyverse" for data manipulation, exploration and visualization.
 
-```{r}
+```{r, warning = F, message = F}
 # Loading the required packages into R session using library() function.
 library(xml2)
 library(rvest)
 library(tidyverse)
 ```
 
-Let us import the first webpage from "Best Buy" website to scrape  
+Let us import the first webpage from "Best Buy" website to scrape. Before getting the URL of the web page, we will conduct a search result by selecting "All laptops" in Category and select filters for "New" in Condition and "1 & Up" in Customer Rating to get laptops which are new and reviewed by customers.
+
+![](Webpage_SS.jpg)</b>
+
+Now, we will use read_html() function to extract the first page using the hyperlink from the browser. 
 
 ```{r}
 # The read_html() function reads the webpage from the URL.
-page1 <- read_html("https://www.bestbuy.com/site/laptop-computers/all-laptops/pcmcat138500050001.c?cp=1&id=pcmcat138500050001&qp=condition_facet%3DCondition~New%5Ecustomerreviews_facet%3DCustomer%20Rating~1%20%26%20Up") 
+page1 <- read_html("https://www.bestbuy.com/site/laptop-computers/all-laptops/pcmcat138500050001.c?cp=1&id=pcmcat138500050001&qp=condition_facet%3DCondition~New%5Ecustomerreviews_facet%3DCustomer%20Rating~1%20%26%20Up")
 
 # Extracting names from the webpage page1.
 name <- html_nodes(page1, ".sku-header a") %>% html_text()
@@ -30,7 +34,7 @@ name <- html_nodes(page1, ".sku-header a") %>% html_text()
 name
 ```
 
-The html_nodes() function will select the nodes from the HTML webpage page1. The node to be selected is specified by the CSS selector which we extracted using the SelectorGadget tool. 
+The html_nodes() function from the rvest package will select the nodes from the HTML webpage page1. The node to be selected is specified by the CSS selector which we extracted using the SelectorGadget tool. 
 
 Now we will use the Pipe operator(%>%) to chain the html_nodes() with html_text(). When you chain the functions, the output of html_nodes() function will be given as input for the html_text() function which will extract text from the selected HTML node.  
 
@@ -71,13 +75,13 @@ head(laptop_p1) # head() can be used to display first few rows from the "laptop_
 In the dataset, the price column is in type character(or string), we want to convert it to type numeric(or number). To do this we can use as.numeric() function, but this will convert the price to NA instead of numeric as the data values have non-numeric characters like "$" and "," between numbers.
 
 ```{r}
-# Gives undesirable result:
+# Gives incorrect result:
 # laptop_p1$price <- as.numeric(laptop_p1$price)
 ```
 
 To avoid the error, we will have to remove the non-numeric characters before using as.numeric() function to convert values to numbers. 
 
-we will use 
+we will use regular expression for detecting these non-numeric characters in the form of patterns. We will be using str_replace_all() function to replace the matched patterns(i.e. "$" and ",") in the string with a empty space("").
 
 ```{r}
 # Removing "$" and "," from the prices:
@@ -90,6 +94,7 @@ laptop_p1$price <- as.numeric(laptop_p1$price)
 laptop_p1$price
 ```
 
+Convert the laptop ratings to numbers. The laptop review count also have non-numeric characters "(", ")" and ",". 
 
 ```{r}
 # Converting ratings from character to numeric type:
@@ -102,68 +107,83 @@ laptop_p1$reviews <- str_replace_all(laptop_p1$reviews, "\\(|\\)|,", "") %>% as.
 laptop_p1$reviews
 ```
 
+Let's separate the screen sizes of laptops into a new column from the name column. We can do this using the separate() function.
 
 ```{r}
-# laptop_p1 <- separate(laptop_p1, name, c("name", "description"), sep = "\"")
-# laptop_p1 <- separate(laptop_p1, name, c("name", "screen_size"), sep = "\\s+(?=(\\d{2}\\.\\d+\\W)|(\\d{2}\"|15\\S))", extra = "merge")
-
 laptop_p1 <- separate(laptop_p1, name, c("name", "screen_size"), sep = "\\s+(?=(\\d{2}\\.\\d+\\W)|(\\d{2}\"|15\\S))")
 
-laptop_p1
+# After separating the screen size column:
+head(laptop_p1)
 ```
 
+Now, we can also separate the specifications into another new column from the screen size column. 
+
 ```{r}
-# laptop_p1 <- separate(laptop_p1, name, into = c("name", "screen_size"), sep = " (?=[^ ]+$)", convert = TRUE)
 laptop_p1 <- separate(laptop_p1, screen_size, into = c("screen_size", "specifications"), sep = "\\S |\"", extra = "merge")
 
-laptop_p1
+# After separating the specification column:
+head(laptop_p1)
 ```
 
-```{r}
-# PAGE 2
-page2 <- read_html("https://www.bestbuy.com/site/laptop-computers/all-laptops/pcmcat138500050001.c?cp=2&id=pcmcat138500050001&qp=condition_facet%3DCondition~New%5Ecustomerreviews_facet%3DCustomer%20Rating~1%20%26%20Up")
+Using the same technique/code to extract data from the second web page. We can get the second page hyperlink by clicking on page 2 of the website. 
 
+### PAGE 2
+```{r}
+page2 <- read_html("https://www.bestbuy.com/site/laptop-computers/all-laptops/pcmcat138500050001.c?cp=2&id=pcmcat138500050001&qp=condition_facet%3DCondition~New%5Ecustomerreviews_facet%3DCustomer%20Rating~1%20%26%20Up") # Using hyperlink of page 2.
+
+# Laptop names:
 name <- html_nodes(page2, ".sku-header a") %>% 
   html_text()
 
+# Laptop model numbers:
 model <-  html_nodes(page2, ".sku-attribute-title:nth-child(1) .sku-value") %>%
   html_text() %>%
   str_replace("\\s$", "")
 
+# Laptop prices:
 price <- html_nodes(page2, "#main-results .priceView-purchase-price span") %>%
   html_text() %>%
   str_replace_all("\\$|,", "") %>%
   as.numeric()
 
+# Laptop ratings:
 rating <- html_nodes(page2, "#main-results .c-review-average") %>% 
   html_text() %>% 
   as.numeric()
 
+# Laptop reviews:
 reviews <- html_nodes(page2, ".c-total-reviews") %>% 
   html_text() %>%
   str_replace_all("\\(|\\)|,", "") %>%
   as.numeric()
 
+# Creating the dataframe for page 2:
 laptop_p2 <- data.frame(name, model, price, rating, reviews, stringsAsFactors = F)
 
+# Separating the screen size and specification columns from name column:
 laptop_p2 <- separate(laptop_p2, name, c("name", "screen_size"), sep = "\\s+(?=(\\d{2}\\.\\d+\\W)|(\\d{2}\"|15\\S))") %>% 
   separate(screen_size, into = c("screen_size", "specifications"), sep = "\\S |\"", extra = "merge")
-  
-laptop_p2
+
+# First few rows of laptop data from Page 2:   
+head(laptop_p2)
 ```
+
+We can use rbind() function to merge the dataframes of page 1 and page 2.
 
 ```{r}
 laptop_p1_p2 <- rbind(laptop_p1, laptop_p2)
-laptop_p1_p2
+head(laptop_p1_p2)
 ```
 
+We can use this code to extract data from each page but it would be time consuming. To make this process more convenient we can use the map_df() function to apply this code to each page of all the 17 pages.
 
 ```{r}
 laptops <- map_df(1:17, function(i) {
   cat(i, "")# Progress Indicator.
 
-  pg <- read_html(paste0("https://www.bestbuy.com/site/laptop-computers/all-laptops/pcmcat138500050001.c?cp=",i,"&id=pcmcat138500050001&qp=condition_facet%3DCondition~New%5Ecustomerreviews_facet%3DCustomer%20Rating~1%20%26%20Up"))
+  pg <- read_html(paste0("https://www.bestbuy.com/site/laptop-computers/all-laptops/pcmcat138500050001.c?cp=",i,"&id=pcmcat138500050001&qp=condition_facet%3DCondition~New%5Ecustomerreviews_facet%3DCustomer%20Rating~1%20%26%20Up")) # Get hyperlinks for all pages.
   
+  # Creates a dataframe containing data of all pages:
   data.frame(name = html_nodes(pg, ".sku-header a") %>% html_text(),
              
              model =  html_nodes(pg, ".sku-attribute-title:nth-child(1) .sku-value") %>% html_text() %>% str_replace("\\s$", ""),
@@ -176,17 +196,23 @@ laptops <- map_df(1:17, function(i) {
 
              stringsAsFactors = F) 
 }) %>% 
+  # Separates the screen size and specification columns from name column:
   separate(name, c("name", "screen_size"), sep = "\\s+(?=(\\d{2}\\.\\d+\\W)|(\\d{2}\"|15\\S))") %>%
   separate(screen_size, into = c("screen_size", "specifications"), 
          sep = "\\S |\"", extra = "merge") %>%
+  # Adds a unique Id to all rows:
   rowid_to_column("Row_id")
 ```
 
 ```{r}
-laptops
+# Dataframe containing data from all pages:
+head(laptops)
 ```
 
+The laptop screen size and specification for rows with row_ids 375 and 378 didn't have any data values because the screen size was missing from the web page for these laptops. We can fix this error by manually adding them.    
+
 ```{r}
+# Adding missing screen size manually:
 for(i in 1:nrow(laptops)){
   if(laptops$model[i] == "G50Vm-X1"){
     laptops$screen_size[i] <- 15.6
@@ -196,10 +222,11 @@ for(i in 1:nrow(laptops)){
     }
   }
 
-laptops[c(386, 389),]
+laptops[c(375, 378),]
 ```
 
 ```{r}
+# Adding missing specification by splitting the name column:
 for(i in 1:nrow(laptops)){
   if(is.na(laptops$specifications[i])){
     x <- str_split(laptops$name[i], " - ", n = 2)
@@ -208,21 +235,41 @@ for(i in 1:nrow(laptops)){
     }
   }
 
-laptops[c(386, 389),]
+laptops[c(375, 378),]
 ```
 
-Finally we can use write_csv() function to export the laptops dataframe to simple text file which stores data in tabular format such as a CSV file.
+Finally we can use write_csv() function to export the cleaned laptops dataframe to simple text file which stores data in tabular format such as a CSV file.
 
 ```{r}
 # Exporting dataframe to a CSV file.
 write.csv(laptops, file = "bblaptops.csv")
 ```
 
+You can view the CSV file in Microsoft Excel and use it with other software.
+![](bb_laptops_ss.jpg)
+
 Let's do some simple data analysis on the laptops dataframe.
 
-We will visualize the inventory of laptops and classify them according to their screen size. 
+### 1. Find the top 10 popular laptops(other than Apple Macbooks) having the highest ratings.
 
 ```{r}
-ggplot(data = laptops, mapping = aes(x = screen_size)) + geom_bar()
+arrange(laptops, desc(rating)) %>% 
+  arrange(desc(reviews)) %>% 
+  filter(!str_detect(name, "Apple")) %>%
+  head(10)
+```
+
+### 2. Classify/Group the inventory of laptops according to their screen size. 
+
+```{r}
+group_by(laptops, screen_size) %>%
+  summarize(Count = n()) %>%
+  arrange(desc(Count))
+```
+
+We can also visualize the number of laptops for evach screen size using a bar chart.
+
+```{r}
+ggplot(data = laptops ,mapping = aes(x = screen_size)) + geom_bar() + xlab("Screen Sizes") + ylab("Number of Laptops") + geom_text(stat='count', aes(label = ..count..), vjust = -0.4)
 ```
 
